@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{ title }}</title>
+    <style>
+      :root {
+        --bg: #080910;
+        --panel: #0f1424;
+        --accent: #5b8def;
+        --accent-2: #9a5bff;
+        --danger: #ff5f7a;
+        --safe: #4be0a5;
+        --text: #e8f0ff;
+        --muted: #9eb0d1;
+        --border: rgba(255, 255, 255, 0.08);
+        --glow: 0 0 35px rgba(91, 141, 239, 0.35);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Space Grotesk", "Segoe UI", sans-serif;
+        background: radial-gradient(circle at 20% 20%, rgba(90, 130, 255, 0.08), transparent 25%),
+          radial-gradient(circle at 80% 10%, rgba(154, 91, 255, 0.08), transparent 30%),
+          radial-gradient(circle at 50% 80%, rgba(75, 224, 165, 0.08), transparent 25%),
+          var(--bg);
+        color: var(--text);
+        min-height: 100vh;
+      }
+
+      header {
+        padding: 32px 24px 8px;
+      }
+
+      .title {
+        font-size: 24px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--text);
+        margin: 0;
+      }
+
+      .subtitle {
+        color: var(--muted);
+        margin: 8px 0 0;
+      }
+
+      main {
+        padding: 0 24px 48px;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 20px;
+        align-items: start;
+      }
+
+      .panel {
+        background: linear-gradient(140deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0));
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        padding: 18px;
+        box-shadow: var(--glow);
+        backdrop-filter: blur(6px);
+      }
+
+      textarea {
+        width: 100%;
+        min-height: 200px;
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 14px;
+        color: var(--text);
+        font-size: 15px;
+        line-height: 1.5;
+        resize: vertical;
+        outline: none;
+      }
+
+      textarea:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 2px rgba(91, 141, 239, 0.25);
+      }
+
+      .label {
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--muted);
+        font-size: 12px;
+        margin-bottom: 8px;
+      }
+
+      .button {
+        margin-top: 12px;
+        width: 100%;
+        padding: 14px;
+        border-radius: 12px;
+        border: 1px solid var(--accent);
+        background: linear-gradient(135deg, var(--accent), var(--accent-2));
+        color: #fff;
+        font-weight: 600;
+        font-size: 14px;
+        letter-spacing: 0.02em;
+        cursor: pointer;
+        transition: transform 120ms ease, box-shadow 120ms ease;
+        box-shadow: 0 12px 40px rgba(91, 141, 239, 0.4);
+      }
+
+      .button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 14px 44px rgba(91, 141, 239, 0.45);
+      }
+
+      .status {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        border-radius: 999px;
+        padding: 10px 14px;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        border: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.03);
+      }
+
+      .status.safe {
+        color: var(--safe);
+        border-color: rgba(75, 224, 165, 0.3);
+        box-shadow: 0 0 20px rgba(75, 224, 165, 0.2);
+      }
+
+      .status.blocked {
+        color: var(--danger);
+        border-color: rgba(255, 95, 122, 0.3);
+        box-shadow: 0 0 20px rgba(255, 95, 122, 0.2);
+      }
+
+      .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 12px;
+      }
+
+      .chip {
+        padding: 8px 10px;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        color: var(--muted);
+        font-size: 12px;
+        letter-spacing: 0.02em;
+      }
+
+      .chip.active {
+        color: #fff;
+        border-color: rgba(91, 141, 239, 0.5);
+        background: linear-gradient(135deg, rgba(91, 141, 239, 0.18), rgba(154, 91, 255, 0.18));
+      }
+
+      .sanitized {
+        margin-top: 12px;
+        padding: 12px;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px dashed var(--border);
+        color: var(--text);
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+
+      .meta {
+        display: grid;
+        gap: 8px;
+        margin-top: 10px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      @media (max-width: 640px) {
+        header {
+          padding-top: 24px;
+        }
+
+        .title {
+          font-size: 20px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <p class="label">Aegis Firewall</p>
+      <h1 class="title">{{ title }}</h1>
+      <p class="subtitle">Detect prompt injections before they reach your models.</p>
+    </header>
+
+    <main>
+      <div class="grid">
+        <section class="panel">
+          <p class="label">Prompt Input</p>
+          <form id="scan-form">
+            <textarea
+              id="prompt"
+              name="prompt"
+              placeholder="Paste a user prompt here to scan for jailbreaks or overrides..."
+              required
+            ></textarea>
+            <button class="button" type="submit">Scan</button>
+          </form>
+          <div class="meta">
+            <span>Rules monitored: {{ rules | length }}</span>
+            <span>Mode: In-memory simulation (no external calls)</span>
+          </div>
+        </section>
+
+        <section class="panel">
+          <p class="label">Scan Results</p>
+          <div id="status" class="status">Awaiting scan</div>
+          <div class="chips" id="chips">
+            {% for rule in rules %}
+            <span class="chip" data-rule="{{ rule[0] }}">{{ rule[0] }}</span>
+            {% endfor %}
+          </div>
+          <div class="sanitized" id="sanitized">Sanitized prompt will appear here.</div>
+        </section>
+      </div>
+    </main>
+
+    <script>
+      const form = document.querySelector("#scan-form");
+      const promptInput = document.querySelector("#prompt");
+      const statusEl = document.querySelector("#status");
+      const chips = Array.from(document.querySelectorAll("[data-rule]"));
+      const sanitizedEl = document.querySelector("#sanitized");
+
+      function setStatus(status, triggers, sanitized) {
+        statusEl.textContent = status || "Awaiting scan";
+        statusEl.classList.toggle("safe", status === "SAFE");
+        statusEl.classList.toggle("blocked", status === "BLOCKED");
+        chips.forEach((chip) => {
+          const active = triggers && triggers.includes(chip.dataset.rule);
+          chip.classList.toggle("active", active);
+        });
+        sanitizedEl.textContent = sanitized || "Sanitized prompt will appear here.";
+      }
+
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const prompt = promptInput.value.trim();
+        if (!prompt) {
+          setStatus("SAFE", [], "Nothing to scan.");
+          return;
+        }
+
+        setStatus("SCANNING...", [], "Scanning in progress...");
+
+        try {
+          const response = await fetch("/scan", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ prompt }),
+          });
+
+          if (!response.ok) {
+            throw new Error(`Request failed: ${response.status}`);
+          }
+
+          const data = await response.json();
+          setStatus(data.status, data.triggers, data.sanitized);
+        } catch (error) {
+          console.error(error);
+          setStatus("ERROR", [], "Scan failed. Check console for details.");
+        }
+      });
+    </script>
+  </body>
+</html>
