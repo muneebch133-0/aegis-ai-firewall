@@ -137,7 +137,7 @@
       <span class="pill">
         Rules: <b>{{ rules | length }}</b> &nbsp;·&nbsp; Detection: <b>{{ "Rules + ML" if semantic_enabled else "Rules only" }}</b>
         &nbsp;·&nbsp; Block at: <b>{{ block_threshold }}/100</b> &nbsp;·&nbsp;
-        Proxy: <b>{{ "LIVE (Claude)" if live_proxy else "DEMO" }}</b>
+        Proxy: <b>{{ "LIVE" if live_proxy else "DEMO" }}</b>
       </span>
     </header>
 
@@ -150,9 +150,9 @@
           <div class="samples" id="samples"></div>
           <div class="row">
             <button class="button" id="scan-btn">Scan</button>
-            <button class="button secondary" id="proxy-btn">Scan &amp; Send to Claude</button>
+            <button class="button secondary" id="proxy-btn">Scan &amp; Send to Model</button>
           </div>
-          <p class="hint">Scan analyzes only. "Scan &amp; Send" forwards to Claude <b>only if the prompt passes</b>.</p>
+          <p class="hint">Scan analyzes only. "Scan &amp; Send" forwards to the model <b>only if the prompt passes</b>.</p>
         </section>
 
         <!-- Verdict -->

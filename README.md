@@ -9,6 +9,10 @@ Prompt injection sits at the top of the OWASP Top 10 for LLM applications, yet m
 ![Tests](https://img.shields.io/badge/tests-28%20passing-brightgreen)
 ![License](https://img.shields.io/badge/license-MIT-lightgrey)
 
+![Aegis blocking a jailbreak attempt](docs/screenshots/blocked-jailbreak.png)
+
+*A jailbreak attempt scored 100/100 and blocked, with the matched rules and the semantic match shown side by side.*
+
 ## Features
 
 * Hybrid detection. Fast regular expression rules catch known attack phrasings, and an embedding similarity model catches paraphrased attacks that never match a rule.
@@ -56,6 +60,20 @@ The semantic layer is what separates Aegis from a plain keyword filter. A prompt
 | Encoding / Obfuscation | LLM01 Prompt Injection | Low | 15 |
 
 The semantic layer ships with a curated set of attack signatures covering the same categories, so paraphrased variants map back to the right OWASP label.
+
+## Screenshots
+
+The dashboard in demo mode, ready for a prompt:
+
+![Dashboard](docs/screenshots/dashboard.png)
+
+A normal question passes the firewall and is marked safe:
+
+![A safe prompt passing the firewall](docs/screenshots/safe.png)
+
+A paraphrased attack that matches none of the rules is still caught by the semantic layer:
+
+![Semantic layer catching a paraphrased attack](docs/screenshots/semantic-paraphrase.png)
 
 ## Quickstart
 
