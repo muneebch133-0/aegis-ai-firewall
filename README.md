@@ -11,6 +11,10 @@ pass the firewall are proxied to **Claude** (`claude-opus-4-8`).
 
 ## ✨ Features
 
+- **Hybrid detection — rules + ML** — fast regex rules catch known phrasings; a
+  lightweight **embedding-similarity layer** catches *paraphrased* attacks the
+  rules miss (e.g. "disregard everything you were told earlier"). Each semantic
+  hit reports the nearest known attack and a cosine similarity.
 - **Risk scoring (0–100) + severity bands** — `SAFE` / `FLAGGED` / `BLOCKED`,
   with `LOW` → `CRITICAL` severity instead of a binary verdict.
 - **OWASP LLM Top 10 mapping** — every rule is tagged (LLM01 Prompt Injection,
@@ -28,13 +32,18 @@ pass the firewall are proxied to **Claude** (`claude-opus-4-8`).
 ## 🚀 Getting Started
 
 ```bash
-pip install -r requirements.txt
+pip install -r requirements.txt          # core firewall (rules only)
+pip install -r requirements-ml.txt        # optional: enables the semantic (ML) layer
 uvicorn main:app --reload
 ```
 
 Open <http://127.0.0.1:8000/>. The firewall works out of the box (demo mode).
 For live Claude responses, copy `.env.example` to `.env` and set
 `ANTHROPIC_API_KEY` (or export it in your shell), then restart.
+
+> The ML layer downloads a ~30 MB static-embedding model on first run
+> (CPU-only, no PyTorch). Without `requirements-ml.txt` the firewall runs on
+> rules only — `/health` reports `"semantic": "off"`.
 
 ### Docker
 
@@ -93,12 +102,27 @@ pip install pytest
 pytest -q
 ```
 
+## 🧠 How detection works
+
+```
+prompt ──► normalize (lowercase, strip zero-width, fold homoglyphs, de-leet)
+       ├─► regex rules ───────────► matched rules + weights + OWASP tags
+       └─► embedding similarity ──► nearest known attack + cosine score
+                       │
+                       ▼
+        risk score (0–100) + severity ──► SAFE / FLAGGED / BLOCKED
+```
+
+Any `HIGH`/`CRITICAL` hit (rule or strong semantic match) blocks on its own;
+weaker signals accumulate toward the block threshold.
+
 ## 🗺️ Roadmap
 
-- Semantic / ML detection (embeddings, Llama Guard / PromptGuard) alongside rules
+- ~~Semantic / ML detection alongside rules~~ ✅ done (embedding similarity via [model2vec](https://github.com/MinishLab/model2vec))
 - Attack-log analytics on the dashboard
 - Benchmark against a public jailbreak dataset (detection rate + false-positive rate)
 - PII detection & redaction
+- Swap-in heavier detectors (PromptGuard / Llama Guard) behind the same backend interface
 
 ## 🚢 Deploying live
 

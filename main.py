@@ -19,6 +19,9 @@ from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel, Field
 
+import semantic
+from semantic import SemanticDetector
+
 # The Anthropic SDK is optional: without it (or without an API key) the firewall
 # still runs and scans prompts, and /proxy-chat falls back to "demo mode".
 try:
@@ -257,6 +260,8 @@ class TriggerDetail(BaseModel):
     severity: Severity
     description: str
     matched: List[str]
+    source: Literal["rule", "semantic"] = "rule"
+    similarity: Optional[float] = None
 
 
 class ScanResponse(BaseModel):
@@ -276,14 +281,22 @@ class ProxyChatResponse(BaseModel):
     model: Optional[str] = None
 
 
-def analyze(prompt: str) -> ScanResponse:
-    """Score a prompt against every rule and return a structured verdict."""
+# Optional semantic detector (set at startup). analyze() reads this global
+# unless an explicit detector is passed (handy for tests).
+semantic_detector: Optional[SemanticDetector] = None
+_UNSET = object()
+
+
+def analyze(prompt: str, detector: object = _UNSET) -> ScanResponse:
+    """Score a prompt against every rule (and the semantic layer) and return a
+    structured verdict."""
     normalized = _normalize(prompt)
     triggers: List[TriggerDetail] = []
     redacted = normalized
     score = 0
     max_rule_sev: Severity = "NONE"
     hard_block = False
+    regex_hit = False
 
     for rule in RULES:
         matched: List[str] = []
@@ -295,6 +308,7 @@ def analyze(prompt: str) -> ScanResponse:
             redacted = pattern.sub("[BLOCKED]", redacted)
 
         if matched:
+            regex_hit = True
             score += rule.weight
             max_rule_sev = _max_sev(max_rule_sev, rule.severity)
             if rule.severity in ("HIGH", "CRITICAL"):
@@ -310,6 +324,31 @@ def analyze(prompt: str) -> ScanResponse:
                 )
             )
 
+    # Semantic layer: catches paraphrased attacks the regexes miss.
+    det = semantic_detector if detector is _UNSET else detector
+    if det is not None:
+        hit = det.detect(prompt)  # type: ignore[union-attr]
+        if hit is not None:
+            score += hit.weight
+            max_rule_sev = _max_sev(max_rule_sev, hit.severity)
+            if hit.severity in ("HIGH", "CRITICAL"):
+                hard_block = True
+            triggers.append(
+                TriggerDetail(
+                    id="semantic_match",
+                    name=f"Semantic match: {hit.label}",
+                    owasp=hit.owasp,
+                    severity=hit.severity,
+                    description=(
+                        f"Embedding similarity {hit.similarity} to a known attack "
+                        f"pattern ({hit.label})."
+                    ),
+                    matched=[hit.nearest],
+                    source="semantic",
+                    similarity=hit.similarity,
+                )
+            )
+
     score = min(score, 100)
     severity = _max_sev(_severity_for_score(score), max_rule_sev)
 
@@ -321,8 +360,9 @@ def analyze(prompt: str) -> ScanResponse:
     else:
         status = "SAFE"
 
-    # Keep clean prompts pristine; only show the redacted view when we caught something.
-    sanitized = redacted if triggers else prompt
+    # Keep clean prompts pristine; only show the redacted view when a regex
+    # rule actually redacted something (the semantic layer has no span to mask).
+    sanitized = redacted if regex_hit else prompt
     owasp_categories = sorted({t.owasp for t in triggers})
 
     return ScanResponse(
@@ -347,6 +387,10 @@ claude_client = None
 if _ANTHROPIC_AVAILABLE and ANTHROPIC_API_KEY:
     claude_client = AsyncAnthropic(api_key=ANTHROPIC_API_KEY)
 
+# Load the semantic detector once (downloads the model on first run). Falls back
+# to None — and rules-only detection — if model2vec/numpy aren't installed.
+semantic_detector = semantic.load_default_detector()
+
 
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request) -> HTMLResponse:
@@ -362,6 +406,7 @@ async def home(request: Request) -> HTMLResponse:
             "rules": rules_view,
             "block_threshold": BLOCK_THRESHOLD,
             "live_proxy": claude_client is not None,
+            "semantic_enabled": semantic_detector is not None,
         },
     )
 
@@ -373,6 +418,12 @@ async def health() -> dict:
         "rules": len(RULES),
         "block_threshold": BLOCK_THRESHOLD,
         "proxy": "live" if claude_client is not None else "demo",
+        "semantic": (
+            semantic_detector.model_name if semantic_detector is not None else "off"
+        ),
+        "semantic_signatures": (
+            len(semantic_detector.signatures) if semantic_detector is not None else 0
+        ),
     }
 
 
