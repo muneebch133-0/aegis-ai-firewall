@@ -1,0 +1,5 @@
+# Optional ML layer: enables the semantic (embedding-similarity) detector.
+# Install on top of requirements.txt:  pip install -r requirements-ml.txt
+# Lightweight static embeddings (no PyTorch), CPU-only, ~30 MB model.
+model2vec
+numpy
